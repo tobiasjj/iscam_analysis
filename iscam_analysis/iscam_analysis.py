@@ -367,6 +367,7 @@ def get_best_result(dataset, number_of_gaussians=None):
 
 
 def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
+                   cdf_protomers=False, cdf_monomers=False, cdf_fit=False,
                    components=False, plot_range=None, mw=None,
                    labeled_xticks=None, figpath=None):
     """
@@ -386,6 +387,12 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
         dataset is chosen (`get_best_result()`).
     centers : list of float
         Positions, where vertical black lines should be plotted
+    cdf_protomers : boolean
+        Plot CDF of protomers.
+    cdf_monomers : boolean
+        Plot CDF of monomers.
+    cdf_fit : boolean
+        Plot CDF of fit.
     components : boolean
         Plot individual fitted guassians.
     plot_range : tuple of floats
@@ -439,13 +446,15 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
     ax_hist.bar(x_bin, y_bin, width=width, antialiased=True, color='orange')
 
     # Plot CDF of experimental data
-    ax_cdf.plot(x_cdf, y_cdf_mw, linewidth=0.5, color='magenta')
-    ax_cdf.plot(x_cdf, y_cdf, linewidth=0.5, color='cyan')
+    if cdf_protomers:
+        ax_cdf.plot(x_cdf, y_cdf, linewidth=0.5, color='cyan')
+    if cdf_monomers:
+        ax_cdf.plot(x_cdf, y_cdf_mw, linewidth=0.5, color='magenta')
 
     # Plot CDF and histogram of fit
-    if fit_params is None:
+    if cdf_fit and fit_params is None:
         _, _, fit_params = get_best_result(dataset)
-    else:
+    if cdf_fit and fit_params is not None:
         names, values = get_fit_values(fit_params)
         y_bin_fit = np.zeros(len(x_bin))
         y_cdf_fit = np.zeros(len(x_cdf))
@@ -565,7 +574,7 @@ def get_sigmas(result_params):
     return get_values(result_params, 'sigma')
 
 
-def get_fit_params(result_params):
+def get_fit_params(result_params, verbose=False):
     """
     Return dictionary of fitted parameters. Each parameter consists of the
     fitted value and the corresponding estimated standard error.
@@ -574,6 +583,15 @@ def get_fit_params(result_params):
     for keys, key in zip(['areas', 'centers', 'sigmas'],
                          ['amplitude', 'center', 'sigma']):
         params[keys] = get_values(result_params, key)
+    area = params['areas']
+    cent = params['centers']
+    sigm = params['sigmas']
+    if verbose:
+        values = '{:6.2f}±{:.2f}'
+        values += ', {:6.2f}±{:.2f}' * max(0, (len(cent) - 1))
+        print('  Areas: ' + values.format(*area.flatten()))
+        print('Centers: ' + values.format(*cent.flatten()))
+        print(' Sigmas: ' + values.format(*sigm.flatten()))
     return params
 
 
@@ -582,4 +600,4 @@ def get_fit_values(fit_params):
     names = ['areas', 'centers', 'sigmas']
     for key in names:
         values.append(fit_params[key])
-        return names, np.array(values)
+    return names, np.array(values)
