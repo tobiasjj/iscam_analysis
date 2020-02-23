@@ -428,8 +428,7 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
 
     # Weight cumsum by mw (i.e. number of monomers) per event
     x_cdf.sort()
-    y_cdf_mw = np.ones(N) * x_cdf
-    y_cdf_mw = np.cumsum(y_cdf_mw) / y_cdf_mw.sum()
+    y_cdf_mw = np.cumsum(x_cdf) / x_cdf.sum()
 
     # Calculate bins and histogram of experimental data
     y_bin, edges = np.histogram(data, bins=bins, range=mw_range, density=True)
