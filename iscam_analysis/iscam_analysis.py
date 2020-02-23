@@ -176,7 +176,7 @@ def make_model(centers, center_pm=None, amplitude=None, fwhm=None, cdf=False,
     fwhm : float
         Initial full width at half maximum of the gaussians in kDa. Defaults to
         10 kDa. Remark: 'fwhm = 2.3548 * sigma'.
-    cdf : boolean
+    cdf : bool
         Build model for cumulative distribution function.
     **kwargs : dict
         Keyword arguments to adjust the model creation. Possible parameters:
@@ -232,15 +232,15 @@ def fit_iscam(dataset, model, mw_range=None, bins=None, cdf=False,
         (0, 1000) kDa.
     bins : int
         Number of bins to bin the data for the histogram. Defaults to 100.
-    cdf : boolean
+    cdf : bool
         Fit the model to the cumulative distribution function of the histogram,
         instead the histogram itself.
-    use_x_means : boolean
+    use_x_means : bool
         Use means of x values of bins, instead of centers of bins.
-    use_y_weights : boolean
+    use_y_weights : bool
         Weight the y values by 1 / N, where N is the number of datapoints for
         each individual bin.
-    add_fit : boolean
+    add_fit : bool
         Add the fit to the dataset.
 
     Returns
@@ -385,15 +385,15 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
         The fit_params from the result from `fit_iscam()` as returned by the
         function `get_fit_params()`. If fit_params is None, the best fit from
         dataset is chosen (`get_best_result()`).
-    centers : list of float
-        Positions, where vertical black lines should be plotted
-    cdf_protomers : boolean
+    centers : bool or list of float
+        Plot vertical black lines at fitted or given positions.
+    cdf_protomers : bool
         Plot CDF of protomers.
-    cdf_monomers : boolean
+    cdf_monomers : bool
         Plot CDF of monomers.
-    cdf_fit : boolean
+    cdf_fit : bool
         Plot CDF of fit.
-    components : boolean
+    components : bool
         Plot individual fitted guassians.
     plot_range : tuple of floats
         (min, max) range to be used for xlim for plotting. Defaults to mw_range.
@@ -451,10 +451,10 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
     if cdf_monomers:
         ax_cdf.plot(x_cdf, y_cdf_mw, linewidth=0.5, color='magenta')
 
-    # Plot CDF and histogram of fit
-    if cdf_fit and fit_params is None:
+    # Plot histogram and CDF of fit
+    if fit_params is None:
         _, _, fit_params = get_best_result(dataset)
-    if cdf_fit and fit_params is not None:
+    if fit_params is not None:
         names, values = get_fit_values(fit_params)
         y_bin_fit = np.zeros(len(x_bin))
         y_cdf_fit = np.zeros(len(x_cdf))
@@ -468,14 +468,17 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
         if not components:
             ax_hist.plot(x_bin, y_bin_fit, linestyle='--', linewidth=0.5,
                          color='black')
-        ax_cdf.plot(x_cdf, y_cdf_fit, linestyle=':', linewidth=0.5,
-                    color='black')
+        if cdf_fit:
+            ax_cdf.plot(x_cdf, y_cdf_fit, linestyle=':', linewidth=0.5,
+                        color='black')
 
     # Plot vertical lines at center positions
-    centers = [] if centers is None else centers
+    centers = [] if (centers is None or not centers) else centers
+    if isinstance(centers, bool) and fit_params is not None:
+        centers = fit_params['centers'][:,0]
     for c in centers:
-        ax_hist.axvline(c, color='black')
-        ax_hist.text(c, (y_bin.max() - y_bin.min()) * 6/7 + y_bin.min(),
+        ax_hist.axvline(c, linestyle='--', linewidth=0.5, color='black')
+        ax_hist.text(c, (y_bin.max() - y_bin.min()) * 0.97 + y_bin.min(),
                      '{:.0f}'.format(c))
 
     # Formatting ...
