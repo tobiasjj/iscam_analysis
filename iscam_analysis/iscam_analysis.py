@@ -81,7 +81,7 @@ def get_iscam_mws(intensities, mw_intensity_line_pars=None):
 
 
 def create_iscam_dataset(filelist, name=None, description=None,
-                         mw_intensity_line_pars=None):
+                         mw_intensity_line_pars=None, **kwargs):
     """
     Parameters
     ----------
@@ -95,6 +95,8 @@ def create_iscam_dataset(filelist, name=None, description=None,
     mw_intensity_line_pars : array like of floats
         The slope and the intercept of the mw intensity relation [slope,
         intercept]
+    **kwargs
+    Additional keyword arguments stored in the information of the dataset.
     """
     dataset = {}
     dataset['data'] = []
@@ -105,6 +107,8 @@ def create_iscam_dataset(filelist, name=None, description=None,
     dataset['info']['columns'] = []
     dataset['info']['filelist'] = filelist
     dataset['info']['mw_intensity_line_pars'] = mw_intensity_line_pars
+    for key, value in kwargs.items():
+        dataset['info'][key] = value
     for file in filelist:
         ints = get_iscam_intensities(file)
         mws = get_iscam_mws(ints, mw_intensity_line_pars=mw_intensity_line_pars)
