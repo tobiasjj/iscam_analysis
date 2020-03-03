@@ -96,7 +96,7 @@ def create_iscam_dataset(filelist, name=None, description=None,
         The slope and the intercept of the mw intensity relation [slope,
         intercept]
     **kwargs
-    Additional keyword arguments stored in the information of the dataset.
+        Additional keyword arguments stored in the information of the dataset.
     """
     dataset = {}
     dataset['data'] = []
