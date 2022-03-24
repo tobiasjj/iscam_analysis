@@ -371,8 +371,8 @@ def get_best_result(dataset, number_of_gaussians=None):
 
 
 def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
-                   cdf_protomers=False, cdf_monomers=False, cdf_fit=False,
-                   components=False, plot_range=None, mw=None,
+                   cdf_protomers=False, cdf_monomers=False, absolute=False,
+                   cdf_fit=False, components=False, plot_range=None, mw=None,
                    labeled_xticks=None, figpath=None):
     """
     Parameters
@@ -395,6 +395,8 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
         Plot CDF of protomers.
     cdf_monomers : bool
         Plot CDF of monomers.
+    absolute : bool
+        Plot absolute or normed values.
     cdf_fit : bool
         Plot CDF of fit.
     components : bool
@@ -428,11 +430,15 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
     # Calculate cumsum of experimental data
     x_cdf = data
     N = len(x_cdf)
-    y_cdf = np.linspace(1/N, 1, N)
+    y_cdf = np.linspace(1, N, N)
+    if not absolute:
+        y_cdf = y_cdf / N
 
     # Weight cumsum by mw (i.e. number of monomers) per event
     x_cdf.sort()
-    y_cdf_mw = np.cumsum(x_cdf) / x_cdf.sum()
+    y_cdf_mw = np.cumsum(x_cdf)
+    if not absolute:
+        y_cdf_mw = y_cdf_mw / x_cdf.sum()
 
     # Calculate bins and histogram of experimental data
     y_bin, edges = np.histogram(data, bins=bins, range=mw_range, density=True)
@@ -492,13 +498,21 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
     ax_hist.xaxis.set_minor_locator(MultipleLocator(mw))
     #ax_cdf.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
     ax_hist.yaxis.set_ticks([])
-    ax_cdf.yaxis.set_ticks([0,1])
+    if absolute:
+        y_max = N
+    else:
+        1
+    ax_cdf.yaxis.set_ticks([0,y_max])
     xlim = (plot_range[0] - 10, plot_range[1] + 10)
     ax_hist.set_xlim(xlim)
     ax_cdf.set_xlim(xlim)
 
     ax_hist.set_xlabel('Molecular weight (kDa)')
-    ax_hist.set_ylabel('$p_{events}$')
+    if absolute:
+        ylabel = '$\#\ events$'
+    else:
+        ylabel = '$p_{events}$'
+    ax_hist.set_ylabel(ylabel)
     #ax_cdf.set_ylabel('$\sum p$')
     ax_cdf.set_ylabel('CDF')
     ax_cdf.yaxis.labelpad = -7
