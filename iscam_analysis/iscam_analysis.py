@@ -372,8 +372,9 @@ def get_best_result(dataset, number_of_gaussians=None):
 
 def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
                    cdf_protomers=False, cdf_monomers=False, absolute=False,
-                   cdf_fit=False, components=False, plot_range=None, mw=None,
-                   labeled_xticks=None, figpath=None):
+                   cdf_fit=False, components=False, plot_range=None,
+                   mw=None, labeled_xticks=None, yticks_hist=False,
+                   figpath=None):
     """
     Parameters
     ----------
@@ -408,6 +409,8 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
     labeled_xticks : list
         A list of number of multiples of mw, where the ticks should be labeled
         with the molecular weight. Defaults to [1, 10, 100].
+    yticks_hist : bool
+        Show yticks of histogram
     figpath : str
         Absolute filename where to save the figure.
 
@@ -441,7 +444,8 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
         y_cdf_mw = y_cdf_mw / x_cdf.sum()
 
     # Calculate bins and histogram of experimental data
-    y_bin, edges = np.histogram(data, bins=bins, range=mw_range, density=True)
+    y_bin, edges = np.histogram(data, bins=bins, range=mw_range, density=not absolute)
+    y_bin_factor = y_bin.sum() * (mw_range[1] - mw_range[0]) / bins
     x_bin = (edges[0:-1] + edges[1:]) / 2
     N_bin = len(x_bin)
 
@@ -472,10 +476,10 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
             y_bin_fit += _y_bin_fit
             y_cdf_fit += gaussian_cdf(x_cdf, *params)
             if components:
-                ax_hist.plot(x_bin, _y_bin_fit, linestyle='--', linewidth=0.5,
+                ax_hist.plot(x_bin, _y_bin_fit * y_bin_factor, linestyle='--', linewidth=0.5,
                              color='black')
         if not components:
-            ax_hist.plot(x_bin, y_bin_fit, linestyle='--', linewidth=0.5,
+            ax_hist.plot(x_bin, y_bin_fit * y_bin_factor, linestyle='--', linewidth=0.5,
                          color='black')
         if cdf_fit:
             ax_cdf.plot(x_cdf, y_cdf_fit, linestyle=':', linewidth=0.5,
@@ -497,11 +501,16 @@ def plot_iscam_fit(dataset, mw_range, bins, fit_params=None, centers=None,
     #ax_hist.xaxis.set_ticklabels(["1", "", "", "10", "", "", "100", ""])
     ax_hist.xaxis.set_minor_locator(MultipleLocator(mw))
     #ax_cdf.yaxis.set_major_formatter(FormatStrFormatter('%.0f'))
-    ax_hist.yaxis.set_ticks([])
+    if yticks_hist:
+        yticks = ax_hist.get_yticks()
+        yticks = [0, yticks.max()/2, yticks.max()]
+        ax_hist.yaxis.set_ticks(yticks)
+    else:
+        ax_hist.yaxis.set_ticks([])
     if absolute:
         y_max = N
     else:
-        1
+        y_max = 1
     ax_cdf.yaxis.set_ticks([0,y_max])
     xlim = (plot_range[0] - 10, plot_range[1] + 10)
     ax_hist.set_xlim(xlim)
